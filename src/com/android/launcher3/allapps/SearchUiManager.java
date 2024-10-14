@@ -51,11 +51,6 @@ public interface SearchUiManager {
      */
     void preDispatchKeyEvent(KeyEvent keyEvent);
 
-    /**
-     * Starts the search UI
-     */
-    void startAppsSearch();
-
     void addOnScrollRangeChangeListener(OnScrollRangeChangeListener listener);
 
     /**

@@ -288,10 +288,10 @@ public class WorkspaceStateTransitionAnimation {
 
         mNewScale = 1.0f;
 
-        if (states.stateIsOverview) {
-            mWorkspace.enableFreeScroll();
-        } else if (states.oldStateIsOverview) {
+        if (states.oldStateIsOverview) {
             mWorkspace.disableFreeScroll();
+        } else if (states.stateIsOverview) {
+            mWorkspace.enableFreeScroll();
         }
 
         if (!states.stateIsNormal) {

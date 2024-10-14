@@ -1,5 +1,6 @@
 package com.android.launcher3.popup;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -11,6 +12,7 @@ import com.android.launcher3.InfoDropTarget;
 import com.android.launcher3.ItemInfo;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
+import com.android.launcher3.Utilities;
 import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.widget.WidgetsBottomSheet;
@@ -46,18 +48,6 @@ public abstract class SystemShortcut extends ItemInfo {
     public abstract View.OnClickListener getOnClickListener(final Launcher launcher,
             final ItemInfo itemInfo);
 
-    public static class Custom extends SystemShortcut {
-
-        public Custom() {
-            super(R.drawable.ic_edit_no_shadow, R.string.action_preferences);
-        }
-
-        @Override
-        public View.OnClickListener getOnClickListener(Launcher launcher, ItemInfo itemInfo) {
-            return null;
-        }
-    }
-
     public static class Widgets extends SystemShortcut {
 
         public Widgets() {
@@ -67,6 +57,10 @@ public abstract class SystemShortcut extends ItemInfo {
         @Override
         public View.OnClickListener getOnClickListener(final Launcher launcher,
                 final ItemInfo itemInfo) {
+            if (!Utilities.isWorkspaceEditAllowed(launcher.getApplicationContext())) {
+                return null;
+            }
+
             final List<WidgetItem> widgets = launcher.getWidgetsForPackageUser(new PackageUserKey(
                     itemInfo.getTargetComponent().getPackageName(), itemInfo.user));
             if (widgets == null) {
@@ -107,4 +101,20 @@ public abstract class SystemShortcut extends ItemInfo {
             };
         }
     }
+
+    public static class AppEdit extends SystemShortcut {
+        AppEdit() {
+            super(R.drawable.ic_edit_app_no_shadow, R.string.app_edit_drop_target_label);
+        }
+
+        @Override
+        public View.OnClickListener getOnClickListener(final Launcher launcher,
+                                                       final ItemInfo itemInfo) {
+            return view -> {
+                ComponentName componentName = itemInfo.getTargetComponent();
+                launcher.startEdit(itemInfo, componentName);
+            };
+        }
+    }
+
 }

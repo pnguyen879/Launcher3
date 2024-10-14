@@ -15,8 +15,6 @@
  */
 package com.android.launcher3.graphics;
 
-import static com.android.launcher3.Utilities.getDevicePrefs;
-
 import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -29,7 +27,6 @@ import android.os.SystemClock;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
@@ -41,6 +38,8 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.util.LooperExecutor;
 
 import java.lang.reflect.Field;
+
+import static com.android.launcher3.Utilities.getDevicePrefs;
 
 /**
  * Utility class to override shape of {@link android.graphics.drawable.AdaptiveIconDrawable}.
@@ -111,7 +110,8 @@ public class IconShapeOverride {
     }
 
     private static String getAppliedValue(Context context) {
-        return getDevicePrefs(context).getString(KEY_PREFERENCE, "");
+        return getDevicePrefs(context).getString(KEY_PREFERENCE,
+                context.getString(R.string.icon_shape_default));
     }
 
     public static void handlePreferenceUi(ListPreference preference) {

@@ -30,20 +30,12 @@ public class UserManagerCompatVN extends UserManagerCompatVM {
 
     @Override
     public boolean isQuietModeEnabled(UserHandle user) {
-        try {
-            return mUserManager.isQuietModeEnabled(user);
-        } catch (SecurityException ex) {
-            return false;
-        }
+        return mUserManager.isQuietModeEnabled(user);
     }
 
     @Override
     public boolean isUserUnlocked(UserHandle user) {
-        try {
-            return mUserManager.isUserUnlocked(user);
-        } catch (SecurityException ex) {
-            return false;
-        }
+        return mUserManager.isUserUnlocked(user);
     }
 }
 

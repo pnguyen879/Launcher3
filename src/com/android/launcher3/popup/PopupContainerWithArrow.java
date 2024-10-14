@@ -125,9 +125,6 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
     private final Rect mStartRect = new Rect();
     private final Rect mEndRect = new Rect();
 
-    private boolean mShouldAnimate = false;
-    private final Handler mHandler = new Handler();
-
     public PopupContainerWithArrow(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mLauncher = Launcher.getLauncher(context);
@@ -243,7 +240,7 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
         mArrow.setPivotY(mIsAboveIcon ? 0 : arrowHeight);
 
         measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-        mShouldAnimate = true;
+        animateOpen();
 
         mLauncher.getDragController().addDragListener(this);
         mOriginalIcon.forceHideBadge(true);
@@ -369,9 +366,6 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
         Point startPoint = computeAnimStartPoint(itemsTotalHeight);
         int top = mIsAboveIcon ? getPaddingTop() : startPoint.y;
         float radius = getItemViewAt(0).getBackgroundRadius();
-        if (Gravity.isHorizontal(mGravity)) {
-            startPoint.x = getMeasuredWidth() / 2;
-        }
         mStartRect.set(startPoint.x, startPoint.y, startPoint.x, startPoint.y);
         mEndRect.set(0, top, getMeasuredWidth(), top + itemsTotalHeight);
         final ValueAnimator revealAnim = new RoundedRectRevealOutlineProvider
@@ -410,20 +404,6 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         enforceContainedWithinScreen(l, r);
-        if (mShouldAnimate) {
-            mShouldAnimate = false;
-            if (Gravity.isHorizontal(mGravity)) {
-                if (Gravity.isVertical(mGravity) || mLauncher.getDeviceProfile().isVerticalBarLayout()) {
-                    mArrow.setVisibility(View.INVISIBLE);
-                } else {
-                    LayoutParams lp = (LayoutParams) mArrow.getLayoutParams();
-                    lp.gravity = Gravity.CENTER_HORIZONTAL;
-                    lp.leftMargin = 0;
-                    lp.rightMargin = 0;
-                }
-            }
-            animateOpen();
-        }
 
     }
 
@@ -836,14 +816,8 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
             boolean success) {
         if (!success) {
             d.dragView.remove();
+            mLauncher.showWorkspace(true);
             mLauncher.getDropTargetBar().onDragEnd();
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mLauncher.showWorkspace(true);
-                    mLauncher.getWorkspace().removeExtraEmptyScreen(true, true);
-                }
-            }, 500);
         }
     }
 
@@ -878,7 +852,6 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
 
     @Override
     protected void handleClose(boolean animate) {
-        mShouldAnimate = false;
         if (animate) {
             animateClose();
         } else {
@@ -894,9 +867,7 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
         if (mOpenCloseAnimator != null) {
             Outline outline = new Outline();
             getOutlineProvider().getOutline(this, outline);
-            if (Utilities.ATLEAST_NOUGAT) {
-                outline.getRect(mEndRect);
-            }
+            outline.getRect(mEndRect);
             mOpenCloseAnimator.cancel();
         }
         mIsOpen = false;
@@ -914,9 +885,6 @@ public class PopupContainerWithArrow extends AbstractFloatingView implements Dra
         Point startPoint = computeAnimStartPoint(itemsTotalHeight);
         int top = mIsAboveIcon ? getPaddingTop() : startPoint.y;
         float radius = getItemViewAt(0).getBackgroundRadius();
-        if (Gravity.isHorizontal(mGravity)) {
-            startPoint.x = getMeasuredWidth() / 2;
-        }
         mStartRect.set(startPoint.x, startPoint.y, startPoint.x, startPoint.y);
         if (mEndRect.isEmpty()) {
             mEndRect.set(0, top, getMeasuredWidth(), top + itemsTotalHeight);

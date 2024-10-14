@@ -86,10 +86,6 @@
   public <init>(...);
 }
 
--keep class com.android.launcher3.graphics.FixedScaleDrawable {
-  public <init>(...);
-}
-
 # Proguard will strip methods required for talkback to properly scroll to
 # next row when focus is on the last item of last row when using a RecyclerView
 # Keep optimized and shrunk proguard to prevent issues like this when using
@@ -107,26 +103,16 @@
   *;
 }
 
--keep class com.google.android.apps.nexuslauncher.CustomAppFilter {
-  public <init>(...);
-}
-
--keep class com.google.android.apps.nexuslauncher.CustomAppPredictor {
-  public <init>(...);
-}
-
--keep class com.google.android.apps.nexuslauncher.CustomDrawableFactory {
-  public <init>(...);
-}
-
--keep class com.google.android.apps.nexuslauncher.CustomEditShortcut {
-  public <init>(...);
-}
-
--keep class com.google.android.apps.nexuslauncher.CustomIconProvider {
-  public <init>(...);
-}
-
--keep class com.google.android.apps.nexuslauncher.SettingsActivity$OpenSourceLicensesFragment {
+-keep class android.support.design.widget.** {
   *;
+}
+
+-keep interface android.support.design.widget.** {
+ *;
+}
+
+-dontwarn android.support.design.**
+
+-keep class com.android.launcher3.graphics.** {
+ *;
 }

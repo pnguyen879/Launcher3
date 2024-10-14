@@ -87,7 +87,7 @@
     <string name="icon_shape_override_label" msgid="2977264953998281004">"Alterar forma do ícone"</string>
     <string name="icon_shape_system_default" msgid="1709762974822753030">"Utilizar a predefinição do sistema"</string>
     <string name="icon_shape_square" msgid="633575066111622774">"Quadrado"</string>
-    <string name="icon_shape_squircle" msgid="5658049910802669495">"Arredondado"</string>
+    <string name="icon_shape_squircle" msgid="5658049910802669495">"Quadrado e círculo"</string>
     <string name="icon_shape_circle" msgid="6550072265930144217">"Círculo"</string>
     <string name="icon_shape_teardrop" msgid="4525869388200835463">"Lágrima"</string>
     <string name="icon_shape_override_progress" msgid="3461735694970239908">"A aplicar alterações à forma do ícone..."</string>
@@ -128,37 +128,4 @@
     <string name="shortcuts_menu_with_notifications_description" msgid="8985659504915468840">"<xliff:g id="NUMBER_OF_SHORTCUTS">%1$d</xliff:g> atalhos e <xliff:g id="NUMBER_OF_NOTIFICATIONS">%2$d</xliff:g> notificações para a aplicação <xliff:g id="APP_NAME">%3$s</xliff:g>"</string>
     <string name="action_dismiss_notification" msgid="5909461085055959187">"Ignorar"</string>
     <string name="notification_dismissed" msgid="6002233469409822874">"Notificação ignorada"</string>
-    <string name="smartspace_preferences">Preferências</string>
-    <string name="label_search">Pesquisar</string>
-    <string name="label_voice_search">Pesquisa por voz</string>
-    <string name="smartspace_preferences_in_settings">Resumo</string>
-    <string name="smartspace_preferences_in_settings_desc">Na parte superior do ecrã principal</string>
-    <string name="title_show_google_app">Apresentar %1$s</string>
-    <string name="msg_minus_one_on_left">À esquerda do ecrã principal</string>
-    <string name="about">Acerca de</string>
-    <string name="title_google_app">Aplicação Google</string>
-    <string name="title_app_suggestions">Apresentar sugestões de aplicações</string>
-    <string name="summary_app_suggestions">No topo da lista Todas as aplicações</string>
-    <string name="about_app_version">Versão</string>
-    <string name="app_name_pixel_launcher">Iniciador do Pixel</string>
-    <string name="title_disable_suggestions_prompt">Pretende desativar as sugestões de aplicações?</string>
-    <string name="msg_disable_suggestions_prompt">Não são apresentadas sugestões na parte superior da lista de aplicações e os dados de utilização utilizados para as criar são apagados de forma permanente.</string>
-    <string name="label_turn_off_suggestions">DESATIVAR</string>
-  <string name="hide_app_sum">Ocultar aplicações da gaveta de aplicações</string>
-  <string name="hide_app">Ocultar aplicação</string>
-    <string name="icon_shape_rounded_square">Quadrado arredondado</string>
-    <string name="smartspace_hours_mins">%1$s %2$s</string>
-    <string name="icon_shape_cylinder">Cilindro</string>
-    <string name="theme_title">Tema</string>
-    <string name="theme_automatic">Automático</string>
-    <string name="theme_default">Padrão</string>
-    <string name="theme_light">Branco</string>
-    <string name="theme_dark">Escuro</string>
-    <string name="theme_transparent">Transparente</string>
-    <string name="pref_open_source_licenses_title">Licenças de código aberto</string>
-    <string name="about_donate">Doar</string>
-    <string name="bridge_missing_message">
-        Não foi possível encontrar o bridge para se conectar ao Feed do Google,
-        ou precisa ser atualizado.
-    </string>
 </resources>

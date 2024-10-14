@@ -116,8 +116,6 @@ public class AllAppsSearchBarController
         // Skip if the query is empty
         String query = v.getText().toString();
         if (query.isEmpty()) {
-            ((InputMethodManager) mLauncher.getSystemService(Context.INPUT_METHOD_SERVICE))
-                    .hideSoftInputFromWindow(v.getWindowToken(), 0);
             return false;
         }
         return mLauncher.startActivitySafely(v,

@@ -15,39 +15,24 @@
  */
 package com.android.launcher3.allapps.search;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.pm.LauncherActivityInfo;
 import android.os.Handler;
-import android.os.UserHandle;
 
 import com.android.launcher3.AppInfo;
-import com.android.launcher3.IconCache;
-import com.android.launcher3.LauncherAppState;
-import com.android.launcher3.Utilities;
-import com.android.launcher3.compat.LauncherAppsCompat;
-import com.android.launcher3.compat.UserManagerCompat;
 import com.android.launcher3.util.ComponentKey;
 
 import java.text.Collator;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * The default search implementation.
  */
 public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
 
-    public final static String SEARCH_HIDDEN_APPS = "pref_search_hidden_apps";
-    private final static Pattern complementaryGlyphs = Pattern.compile("\\p{M}");
-    private final Context mContext;
     private final List<AppInfo> mApps;
     protected final Handler mResultHandler;
 
-    public DefaultAppSearchAlgorithm(Context context, List<AppInfo> apps) {
-        mContext = context;
+    public DefaultAppSearchAlgorithm(List<AppInfo> apps) {
         mApps = apps;
         mResultHandler = new Handler();
     }
@@ -78,7 +63,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
         final String queryTextLower = query.toLowerCase();
         final ArrayList<ComponentKey> result = new ArrayList<>();
         StringMatcher matcher = StringMatcher.getInstance();
-        for (AppInfo info : getApps(mContext, mApps)) {
+        for (AppInfo info : mApps) {
             if (matches(info, queryTextLower, matcher)) {
                 result.add(info.toComponentKey());
             }
@@ -86,39 +71,10 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
         return result;
     }
 
-    public static List<AppInfo> getApps(Context context, List<AppInfo> defaultApps) {
-        if (!Utilities.getPrefs(context).getBoolean(SEARCH_HIDDEN_APPS, false)) {
-            return defaultApps;
-        }
-        final List<AppInfo> apps = new ArrayList<>();
-        final IconCache iconCache = LauncherAppState.getInstance(context).getIconCache();
-        for (UserHandle user : UserManagerCompat.getInstance(context).getUserProfiles()) {
-            final List<ComponentName> duplicatePreventionCache = new ArrayList<>();
-            for (LauncherActivityInfo info : LauncherAppsCompat.getInstance(context).getActivityList(null, user)) {
-                if (!duplicatePreventionCache.contains(info.getComponentName())) {
-                    duplicatePreventionCache.add(info.getComponentName());
-                    final AppInfo appInfo = new AppInfo(context, info, user);
-                    iconCache.getTitleAndIcon(appInfo, false);
-                    apps.add(appInfo);
-                }
-            }
-        }
-        return apps;
-    }
-
     public static boolean matches(AppInfo info, String query, StringMatcher matcher) {
-        return matches(info, query, matcher, false) || matches(info, query, matcher, true);
-    }
-
-    private static boolean matches(AppInfo info, String query, StringMatcher matcher, boolean normalize) {
-        String title = info.title.toString();
-
-        if (normalize) {
-            title = normalize(title);
-            query = normalize(query);
-        }
-
         int queryLength = query.length();
+
+        String title = info.title.toString();
         int titleLength = title.length();
 
         if (titleLength < queryLength || queryLength <= 0) {
@@ -141,10 +97,6 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm {
             }
         }
         return false;
-    }
-
-    private static String normalize(String in) {
-        return complementaryGlyphs.matcher(Normalizer.normalize(in, Normalizer.Form.NFKD)).replaceAll("");
     }
 
     /**

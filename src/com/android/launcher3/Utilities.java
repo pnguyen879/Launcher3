@@ -32,6 +32,8 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.DeadObjectException;
@@ -51,12 +53,14 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
 import com.android.launcher3.config.FeatureFlags;
+import com.android.launcher3.icons.CustomIconsProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
@@ -125,17 +129,14 @@ public final class Utilities {
             CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-    public static final String THEME_OVERRIDE_KEY = "pref_override_theme";
-
-    public static int getThemeHints(Context context, int wallpaperHints) {
-        String hints = getPrefs(context).getString(THEME_OVERRIDE_KEY, "");
-        if (TextUtils.isEmpty(hints)) {
-            return wallpaperHints;
-        }
-        return Integer.valueOf(hints);
-    }
-
     public static final String ALLOW_ROTATION_PREFERENCE_KEY = "pref_allowRotation";
+
+    private static final String GRID_VALUE_SEPARATOR = "x";
+    private static final int GRID_ROW_VALUE_DEFAULT = 4;
+    private static final int GRID_COLUMN_VALUE_DEFAULT = 5;
+
+    private static final int SUGGESTIONS_DAY_START = 5;
+    private static final int SUGGESTIONS_DAY_END = 21;
 
     public static boolean isPropertyEnabled(String propertyName) {
         return Log.isLoggable(propertyName, Log.VERBOSE);
@@ -637,6 +638,11 @@ public final class Utilities {
     }
 
     public static <T> T getOverrideObject(Class<T> clazz, Context context, int resId) {
+       if (R.string.icon_provider_class == resId &&
+                clazz.getSimpleName().equals(IconProvider.class.getSimpleName())) {
+            return (T) new CustomIconsProvider(context);
+        }
+
         String className = context.getString(resId);
         if (!TextUtils.isEmpty(className)) {
             try {
@@ -665,4 +671,89 @@ public final class Utilities {
         return hashSet;
     }
 
+    public static Pair<Integer, Integer> extractCustomGrid(String value) {
+        int columns = GRID_COLUMN_VALUE_DEFAULT;
+        int rows = GRID_ROW_VALUE_DEFAULT;
+        String[] values = value.split(GRID_VALUE_SEPARATOR);
+
+        if (values.length == 2) {
+            try {
+                columns = Integer.parseInt(values[0]);
+                rows = Integer.parseInt(values[1]);
+            } catch (NumberFormatException e) {
+                // Ignore and fallback to default
+                columns = GRID_COLUMN_VALUE_DEFAULT;
+                rows = GRID_ROW_VALUE_DEFAULT;
+            }
+        }
+
+        return new Pair<>(columns, rows);
+
+    }
+
+    public static String getGridValue(int columns, int rows) {
+        return String.format(Locale.ENGLISH, "%1$d%2$s%3$d", columns,
+                GRID_VALUE_SEPARATOR, rows);
+    }
+
+    public static boolean isUsingIconPack(Context context) {
+        SharedPreferences prefs = Utilities.getPrefs(context.getApplicationContext());
+        String defaultPack = context.getString(R.string.icon_pack_default);
+        String defaultLocalizedPack = context.getString(R.string.icon_pack_system);
+        String currentPack = prefs.getString(QuickSettingsActivity.KEY_ICON_PACK, defaultPack);
+
+        // if our current icon pack does not equal to the default or localized default icon pack,
+        // assume we are using an icon pack
+        return !(currentPack.equals(defaultPack) || currentPack.equals(defaultLocalizedPack));
+    }
+
+    public static boolean isWorkspaceEditAllowed(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(SettingsActivity.KEY_WORKSPACE_EDIT, true);
+    }
+
+    public static boolean hasHeadset(Context context) {
+        AudioManager manager = context.getSystemService(AudioManager.class);
+        if (manager == null) {
+            return false;
+        }
+
+        AudioDeviceInfo[] devices = manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        for (AudioDeviceInfo device : devices) {
+            switch (device.getType()) {
+                case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
+                case AudioDeviceInfo.TYPE_USB_HEADSET:
+                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
+                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isDayTime() {
+        Calendar calendar = Calendar.getInstance();
+        int hours = calendar.get(Calendar.HOUR_OF_DAY);
+        return hours > SUGGESTIONS_DAY_START && hours < SUGGESTIONS_DAY_END;
+    }
+
+    public static boolean isAdaptiveIconForced(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(SettingsActivity.KEY_FORCE_ADAPTIVE_ICONS, false);
+    }
+
+    public static boolean arePredictiveAppsEnabled(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(SettingsActivity.KEY_PREDICTIVE_APPS, false);
+    }
+
+    public static boolean hasPackageInstalled(Context context, String pkgName) {
+        try {
+            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(pkgName, 0);
+            return ai.enabled;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
 }

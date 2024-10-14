@@ -26,7 +26,6 @@ import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
 import android.text.method.TextKeyListener;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -132,7 +131,7 @@ public class AppsSearchContainerLayout extends FrameLayout
         mAppsRecyclerView.addOnScrollListener(mElevationController);
         mAdapter = (AllAppsGridAdapter) mAppsRecyclerView.getAdapter();
         mSearchBarController.initialize(
-                new DefaultAppSearchAlgorithm(getContext(), appsList.getApps()), mSearchInput, mLauncher, this);
+                new DefaultAppSearchAlgorithm(appsList.getApps()), mSearchInput, mLauncher, this);
     }
 
     @Override
@@ -167,13 +166,6 @@ public class AppsSearchContainerLayout extends FrameLayout
                     mSearchBarController.focusSearchField();
                 }
             }
-        }
-    }
-
-    @Override
-    public void startAppsSearch() {
-        if (mApps != null) {
-            mSearchBarController.focusSearchField();
         }
     }
 

@@ -144,8 +144,6 @@ public class DeviceProfile {
     // Insets
     private Rect mInsets = new Rect();
 
-    private final int mBottomMarginHw;
-
     // Listeners
     private ArrayList<LauncherLayoutChangeListener> mListeners = new ArrayList<>();
 
@@ -232,12 +230,6 @@ public class DeviceProfile {
                 ? Utilities.pxFromDp(inv.iconSize, dm)
                 : res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_size)
                         + hotseatBarTopPaddingPx + hotseatBarBottomPaddingPx;
-
-        mBottomMarginHw = res.getDimensionPixelSize(R.dimen.qsb_hotseat_bottom_margin_hw);
-        if (!isVerticalBarLayout()) {
-            hotseatBarSizePx += mBottomMarginHw;
-            hotseatBarBottomPaddingPx += mBottomMarginHw;
-        }
 
         // Determine sizes.
         widthPx = width;
@@ -448,22 +440,11 @@ public class DeviceProfile {
     }
 
     public void updateInsets(Rect insets) {
-        if (!isVerticalBarLayout()) {
-            if (mInsets.bottom == 0 && insets.bottom != 0) {
-                //Navbar is now shown, remove padding
-                hotseatBarSizePx -= mBottomMarginHw;
-                hotseatBarBottomPaddingPx -= mBottomMarginHw;
-            } else if (mInsets.bottom != 0 && insets.bottom == 0) {
-                //Navbar is now hidden, show padding
-                hotseatBarSizePx += mBottomMarginHw;
-                hotseatBarBottomPaddingPx += mBottomMarginHw;
-            }
-        }
         mInsets.set(insets);
     }
 
     public void updateAppsViewNumCols() {
-        allAppsNumCols = allAppsNumPredictiveCols = inv.numColumns;
+        allAppsNumCols = allAppsNumPredictiveCols = inv.numColumnsDrawer;
     }
 
     /** Returns the width and height of the search bar, ignoring any padding. */

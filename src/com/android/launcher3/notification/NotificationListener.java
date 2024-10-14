@@ -32,7 +32,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.android.launcher3.LauncherModel;
-import com.android.launcher3.Utilities;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.SettingsObserver;
 
@@ -265,20 +264,16 @@ public class NotificationListener extends NotificationListenerService {
     }
 
     private boolean shouldBeFilteredOut(StatusBarNotification sbn) {
+        getCurrentRanking().getRanking(sbn.getKey(), mTempRanking);
+        if (!mTempRanking.canShowBadge()) {
+            return true;
+        }
         Notification notification = sbn.getNotification();
-        if (Utilities.ATLEAST_OREO) {
-            getCurrentRanking().getRanking(sbn.getKey(), mTempRanking);
-            if (!mTempRanking.canShowBadge()) {
+        if (mTempRanking.getChannel().getId().equals(NotificationChannel.DEFAULT_CHANNEL_ID)) {
+            // Special filtering for the default, legacy "Miscellaneous" channel.
+            if ((notification.flags & Notification.FLAG_ONGOING_EVENT) != 0) {
                 return true;
             }
-            if (mTempRanking.getChannel().getId().equals(NotificationChannel.DEFAULT_CHANNEL_ID)) {
-                // Special filtering for the default, legacy "Miscellaneous" channel.
-                if ((notification.flags & Notification.FLAG_ONGOING_EVENT) != 0) {
-                    return true;
-                }
-            }
-        } else if ((notification.flags & Notification.FLAG_ONGOING_EVENT) != 0) {
-            return true;
         }
         boolean isGroupHeader = (notification.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
         CharSequence title = notification.extras.getCharSequence(Notification.EXTRA_TITLE);

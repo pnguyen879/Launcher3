@@ -17,6 +17,14 @@
 LOCAL_PATH := $(call my-dir)
 
 #
+# Prebuilt Google Feed library
+#
+include $(CLEAR_VARS)
+LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := \
+    libGoogleFeed:libs/libGoogleFeed.jar
+include $(BUILD_MULTI_PREBUILT)
+
+#
 # Build rule for Launcher3 app.
 #
 include $(CLEAR_VARS)
@@ -25,39 +33,45 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
+    android-support-design \
+    android-support-v7-appcompat \
     android-support-v7-recyclerview \
     android-support-v7-palette \
-    android-support-dynamic-animation
+    android-support-dynamic-animation \
+    libGoogleFeed
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
     $(call all-java-files-under, src_config) \
     $(call all-java-files-under, src_flags) \
-    $(call all-Iaidl-files-under, src) \
     $(call all-proto-files-under, protos) \
-    $(call all-proto-files-under, proto_overrides) \
-    $(call all-proto-files-under, proto_pixel)
+    $(call all-proto-files-under, proto_overrides)
 
 LOCAL_RESOURCE_DIR := \
     $(LOCAL_PATH)/res \
+    frameworks/support/design/res \
+    frameworks/support/v7/appcompat/res \
     prebuilts/sdk/current/support/v7/recyclerview/res \
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
 LOCAL_PROTOC_OPTIMIZE_TYPE := nano
-LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/ --proto_path=$(LOCAL_PATH)/proto_pixel/
+LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/
 LOCAL_PROTO_JAVA_OUTPUT_PARAMS := enum_style=java
 
 LOCAL_AAPT_FLAGS := \
-    --rename-manifest-package com.google.android.apps.nexuslauncher \
     --auto-add-overlay \
+    --extra-packages android.support.design \
+    --extra-packages android.support.v7.appcompat \
     --extra-packages android.support.v7.recyclerview \
 
 LOCAL_SDK_VERSION := current
-LOCAL_MIN_SDK_VERSION := 21
-LOCAL_PACKAGE_NAME := Launcher3
+LOCAL_MIN_SDK_VERSION := 23
+LOCAL_PACKAGE_NAME := Trebuchet
 LOCAL_PRIVILEGED_MODULE := true
-LOCAL_OVERRIDES_PACKAGES := Home Launcher2
+LOCAL_OVERRIDES_PACKAGES := Home Launcher2 Launcher3
+
+LOCAL_AAPT_FLAGS += --rename-manifest-package org.lineageos.trebuchet
 
 LOCAL_FULL_LIBS_MANIFEST_FILES := $(LOCAL_PATH)/AndroidManifest-common.xml
 
@@ -74,6 +88,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
+    android-support-design \
+    android-support-v7-appcompat \
     android-support-v7-recyclerview \
     android-support-v7-palette \
     android-support-dynamic-animation
@@ -83,30 +99,34 @@ LOCAL_SRC_FILES := \
     $(call all-java-files-under, src_config) \
     $(call all-java-files-under, go/src_flags) \
     $(call all-proto-files-under, protos) \
-    $(call all-proto-files-under, proto_overrides) \
-    $(call all-proto-files-under, proto_pixel)
+    $(call all-proto-files-under, proto_overrides)
 
 LOCAL_RESOURCE_DIR := \
     $(LOCAL_PATH)/go/res \
     $(LOCAL_PATH)/res \
+    frameworks/support/design/res \
+    frameworks/support/v7/appcompat/res \
     prebuilts/sdk/current/support/v7/recyclerview/res \
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
 LOCAL_PROTOC_OPTIMIZE_TYPE := nano
-LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/ --proto_path=$(LOCAL_PATH)/proto_pixel/
+LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/
 LOCAL_PROTO_JAVA_OUTPUT_PARAMS := enum_style=java
 
 LOCAL_AAPT_FLAGS := \
-    --rename-manifest-package com.google.android.apps.nexuslauncher \
     --auto-add-overlay \
+    --extra-packages android.support.design \
+    --extra-packages android.support.v7.appcompat \
     --extra-packages android.support.v7.recyclerview \
 
 LOCAL_SDK_VERSION := current
 LOCAL_MIN_SDK_VERSION := 21
-LOCAL_PACKAGE_NAME := Launcher3Go
+LOCAL_PACKAGE_NAME := TrebuchetGo
 LOCAL_PRIVILEGED_MODULE := true
-LOCAL_OVERRIDES_PACKAGES := Home Launcher2 Launcher3
+LOCAL_OVERRIDES_PACKAGES := Home Launcher2 Launcher3 Launcher3Go Trebuchet
+
+LOCAL_AAPT_FLAGS += --rename-manifest-package org.lineageos.trebuchet
 
 LOCAL_FULL_LIBS_MANIFEST_FILES := \
     $(LOCAL_PATH)/AndroidManifest.xml \
@@ -123,15 +143,14 @@ include $(BUILD_PACKAGE)
 #
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-proto-files-under, protos) $(call all-proto-files-under, proto_overrides) \
-    $(call all-proto-files-under, proto_pixel)
+LOCAL_SRC_FILES := $(call all-proto-files-under, protos) $(call all-proto-files-under, proto_overrides)
 
 LOCAL_PROTOC_OPTIMIZE_TYPE := nano
-LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/ --proto_path=$(LOCAL_PATH)/proto_pixel/
+LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/protos/ --proto_path=$(LOCAL_PATH)/proto_overrides/
 LOCAL_PROTO_JAVA_OUTPUT_PARAMS := enum_style=java
 
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE := launcher_proto_lib
+LOCAL_MODULE := trebuchet_proto_lib
 LOCAL_IS_HOST_MODULE := true
 LOCAL_STATIC_JAVA_LIBRARIES := host-libprotobuf-java-nano
 

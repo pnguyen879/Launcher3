@@ -42,10 +42,13 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.ActivityInfo;
+import android.content.pm.LauncherActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -62,6 +65,7 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.TextKeyListener;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -74,11 +78,17 @@ import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListPopupWindow;
 import android.widget.Toast;
 
 import com.android.launcher3.DropTarget.DragObject;
@@ -87,12 +97,12 @@ import com.android.launcher3.Workspace.ItemOperator;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
 import com.android.launcher3.allapps.AllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsTransitionController;
+import com.android.launcher3.allapps.PredictiveAppsProvider;
 import com.android.launcher3.anim.AnimationLayerSet;
 import com.android.launcher3.compat.AppWidgetManagerCompat;
 import com.android.launcher3.compat.LauncherAppsCompat;
 import com.android.launcher3.compat.LauncherAppsCompatVO;
 import com.android.launcher3.compat.UserManagerCompat;
-import com.android.launcher3.compat.WallpaperManagerCompat;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dragndrop.DragController;
 import com.android.launcher3.dragndrop.DragLayer;
@@ -103,6 +113,9 @@ import com.android.launcher3.dynamicui.ExtractedColors;
 import com.android.launcher3.dynamicui.WallpaperColorInfo;
 import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderIcon;
+import com.android.launcher3.graphics.LauncherIcons;
+import com.android.launcher3.icons.IconPickerActivity;
+import com.android.launcher3.icons.IconsHandler;
 import com.android.launcher3.keyboard.CustomActionsPopup;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
 import com.android.launcher3.logging.FileLog;
@@ -112,7 +125,6 @@ import com.android.launcher3.model.PackageItemInfo;
 import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.notification.NotificationListener;
 import com.android.launcher3.pageindicators.PageIndicator;
-import com.android.launcher3.pageindicators.PageIndicatorCaretLandscape;
 import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.popup.PopupDataProvider;
 import com.android.launcher3.shortcuts.DeepShortcutManager;
@@ -121,7 +133,6 @@ import com.android.launcher3.userevent.nano.LauncherLogProto.Action;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ControlType;
 import com.android.launcher3.util.ActivityResultInfo;
-import com.android.launcher3.util.RunnableWithId;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ComponentKeyMapper;
 import com.android.launcher3.util.ItemInfoMatcher;
@@ -129,6 +140,7 @@ import com.android.launcher3.util.MultiHashMap;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.PendingRequestArgs;
+import com.android.launcher3.util.RunnableWithId;
 import com.android.launcher3.util.SystemUiController;
 import com.android.launcher3.util.TestingUtils;
 import com.android.launcher3.util.Themes;
@@ -139,7 +151,6 @@ import com.android.launcher3.widget.PendingAddWidgetInfo;
 import com.android.launcher3.widget.WidgetAddFlowHandler;
 import com.android.launcher3.widget.WidgetHostViewLoader;
 import com.android.launcher3.widget.WidgetsContainerView;
-
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -350,6 +361,13 @@ public class Launcher extends BaseActivity
 
     private RotationPrefChangeHandler mRotationPrefChangeHandler;
 
+    private PredictiveAppsProvider mPredictiveAppsProvider;
+
+    // Icons editor
+    private AlertDialog mIconEditDialog;
+    private EditText mIconEditTitle;
+    private IconsHandler mIconsHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         if (DEBUG_STRICT_MODE) {
@@ -370,13 +388,15 @@ public class Launcher extends BaseActivity
             Trace.beginSection("Launcher-onCreate");
         }
 
+        mPredictiveAppsProvider = new PredictiveAppsProvider(this);
+
         if (mLauncherCallbacks != null) {
             mLauncherCallbacks.preOnCreate();
         }
 
         WallpaperColorInfo wallpaperColorInfo = WallpaperColorInfo.getInstance(this);
         wallpaperColorInfo.setOnThemeChangeListener(this);
-        overrideTheme(wallpaperColorInfo.isDark(), wallpaperColorInfo.supportsDarkText(), wallpaperColorInfo.isTransparent());
+        overrideTheme(wallpaperColorInfo.isDark(), wallpaperColorInfo.supportsDarkText());
 
         super.onCreate(savedInstanceState);
 
@@ -429,6 +449,8 @@ public class Launcher extends BaseActivity
 
         lockAllApps();
 
+        mIconsHandler = IconCache.getIconsHandler(this);
+
         restoreState(savedInstanceState);
 
         if (LauncherAppState.PROFILE_STARTUP) {
@@ -480,6 +502,7 @@ public class Launcher extends BaseActivity
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_USER_PRESENT); // When the device wakes up + keyguard is gone
+        filter.addAction(Intent.ACTION_HEADSET_PLUG); // Change suggestions when headset is plugged in
         registerReceiver(mReceiver, filter);
         mShouldFadeInScrim = true;
 
@@ -489,6 +512,8 @@ public class Launcher extends BaseActivity
         if (mLauncherCallbacks != null) {
             mLauncherCallbacks.onCreate(savedInstanceState);
         }
+
+        tryAndUpdatePredictedApps();
     }
 
     @Override
@@ -496,13 +521,11 @@ public class Launcher extends BaseActivity
         recreate();
     }
 
-    protected void overrideTheme(boolean isDark, boolean supportsDarkText, boolean isTransparent) {
+    protected void overrideTheme(boolean isDark, boolean supportsDarkText) {
         if (isDark) {
             setTheme(R.style.LauncherThemeDark);
         } else if (supportsDarkText) {
             setTheme(R.style.LauncherThemeDarkText);
-        } else if (isTransparent) {
-            setTheme(R.style.LauncherThemeTransparent);
         }
     }
 
@@ -529,9 +552,12 @@ public class Launcher extends BaseActivity
     }
 
     private void loadExtractedColorsAndColorItems() {
-        mExtractedColors.load(this);
-        mHotseat.updateColor(mExtractedColors, !mPaused);
-        mWorkspace.getPageIndicator().updateColor(mExtractedColors);
+        // TODO: do this in pre-N as well, once the extraction part is complete.
+        if (Utilities.ATLEAST_NOUGAT) {
+            mExtractedColors.load(this);
+            mHotseat.updateColor(mExtractedColors, !mPaused);
+            mWorkspace.getPageIndicator().updateColor(mExtractedColors);
+        }
     }
 
     private LauncherCallbacks mLauncherCallbacks;
@@ -961,12 +987,12 @@ public class Launcher extends BaseActivity
         if (mOnResumeState == State.WORKSPACE) {
             showWorkspace(false);
         } else if (mOnResumeState == State.APPS) {
+            mWorkspace.setVisibility(View.INVISIBLE);
             boolean launchedFromApp = (mWaitingForResume != null);
             // Don't update the predicted apps if the user is returning to launcher in the apps
             // view after launching an app, as they may be depending on the UI to be static to
             // switch to another app, otherwise, if it was
-            showAppsView(false /* animated */, !launchedFromApp /* updatePredictedApps */,
-                    false /* focusSearchBar */);
+            showAppsView(false /* animated */, !launchedFromApp /* updatePredictedApps */);
         } else if (mOnResumeState == State.WIDGETS) {
             showWidgetsView(false, false);
         }
@@ -1049,9 +1075,6 @@ public class Launcher extends BaseActivity
         // Refresh shortcuts if the permission changed.
         mModel.refreshShortcutsIfRequired();
 
-        if (mAllAppsController.isTransitioning()) {
-            mAppsView.setVisibility(View.VISIBLE);
-        }
         if (shouldShowDiscoveryBounce()) {
             mAllAppsController.showDiscoveryBounce();
         }
@@ -1059,6 +1082,8 @@ public class Launcher extends BaseActivity
             mLauncherCallbacks.onResume();
         }
 
+        mWidgetsButton.setVisibility(Utilities.isWorkspaceEditAllowed(getApplicationContext()) ?
+                View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -1226,7 +1251,7 @@ public class Launcher extends BaseActivity
                 if (mState == State.WORKSPACE && !mWorkspace.isInOverviewMode() &&
                         !mWorkspace.isSwitchingState()) {
                     mOverviewPanel.requestFocus();
-                    showOverviewMode(true, true /* requestButtonFocus */);
+                    showOverviewMode(true, false /* requestButtonFocus */);
                 }
             }
             return true;
@@ -1558,6 +1583,9 @@ public class Launcher extends BaseActivity
                 // ACTION_USER_PRESENT is sent after onStart/onResume. This covers the case where
                 // the user unlocked and the Launcher is not in the foreground.
                 mShouldFadeInScrim = false;
+            } else if (Intent.ACTION_HEADSET_PLUG.equals(action)) {
+                // We propose the user different suggestions when headset is plugged in
+                tryAndUpdatePredictedApps();
             }
         }
     };
@@ -1732,9 +1760,7 @@ public class Launcher extends BaseActivity
             // If we are already on home, then just animate back to the workspace,
             // otherwise, just wait until onResume to set the state back to Workspace
             if (alreadyOnHome) {
-                if (!mAllAppsController.isDragging()) {
-                    showWorkspace(true);
-                }
+                showWorkspace(true);
             } else {
                 mOnResumeState = State.WORKSPACE;
             }
@@ -1754,6 +1780,11 @@ public class Launcher extends BaseActivity
             // Reset the widgets view
             if (!alreadyOnHome && mWidgetsView != null) {
                 mWidgetsView.scrollToTop();
+            }
+
+            if (mIconEditDialog != null) {
+                mIconEditDialog.dismiss();
+                mIconEditDialog = null;
             }
 
             if (mLauncherCallbacks != null) {
@@ -1991,7 +2022,7 @@ public class Launcher extends BaseActivity
         return mWorkspaceLoading;
     }
 
-    protected void setWorkspaceLoading(boolean value) {
+    private void setWorkspaceLoading(boolean value) {
         boolean isLocked = isWorkspaceLocked();
         mWorkspaceLoading = value;
         if (isLocked != isWorkspaceLocked()) {
@@ -2235,6 +2266,9 @@ public class Launcher extends BaseActivity
         } else {
             // TODO: Log this case.
             mWorkspace.exitWidgetResizeMode();
+
+            // Back button is a no-op here, but give at least some feedback for the button press
+            mWorkspace.showOutlinesTemporarily();
         }
     }
 
@@ -2346,20 +2380,7 @@ public class Launcher extends BaseActivity
         if (!isAppsViewVisible()) {
             getUserEventDispatcher().logActionOnControl(Action.Touch.TAP,
                     ControlType.ALL_APPS_BUTTON);
-            showAppsView(true /* animated */, true /* updatePredictedApps */,
-                    false /* focusSearchBar */);
-        } else {
-            showWorkspace(true);
-        }
-    }
-
-    protected void onLongClickAllAppsButton(View v) {
-        if (LOGD) Log.d(TAG, "onLongClickAllAppsButton");
-        if (!isAppsViewVisible()) {
-            getUserEventDispatcher().logActionOnControl(Action.Touch.LONGPRESS,
-                    ControlType.ALL_APPS_BUTTON);
-            showAppsView(true /* animated */,
-                    true /* updatePredictedApps */, true /* focusSearchBar */);
+            showAppsView(true /* animated */, true /* updatePredictedApps */);
         } else {
             showWorkspace(true);
         }
@@ -2469,7 +2490,7 @@ public class Launcher extends BaseActivity
             throw new IllegalArgumentException("Input must have a valid intent");
         }
         boolean success = startActivitySafely(v, intent, item);
-        getUserEventDispatcher().logAppLaunch(v, intent, item.user); // TODO for discovered apps b/35802115
+        getUserEventDispatcher().logAppLaunch(v, intent); // TODO for discovered apps b/35802115
 
         if (success && v instanceof BubbleTextView) {
             mWaitingForResume = (BubbleTextView) v;
@@ -2526,11 +2547,8 @@ public class Launcher extends BaseActivity
 
         String pickerPackage = getString(R.string.wallpaper_picker_package);
         boolean hasTargetPackage = !TextUtils.isEmpty(pickerPackage);
-        try {
-            if (hasTargetPackage && getPackageManager().getApplicationInfo(pickerPackage, 0).enabled) {
-                intent.setPackage(pickerPackage);
-            }
-        } catch (PackageManager.NameNotFoundException ex) {
+        if (hasTargetPackage) {
+            intent.setPackage(pickerPackage);
         }
 
         intent.setSourceBounds(getViewBounds(v));
@@ -2550,8 +2568,7 @@ public class Launcher extends BaseActivity
      */
     public void onClickSettingsButton(View v) {
         if (LOGD) Log.d(TAG, "onClickSettingsButton");
-        Intent intent = new Intent(Intent.ACTION_APPLICATION_PREFERENCES)
-                .setPackage(getPackageName());
+        Intent intent = new Intent(this, QuickSettingsActivity.class);
         intent.setSourceBounds(getViewBounds(v));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent, getActivityLaunchOptions(v));
@@ -2622,10 +2639,13 @@ public class Launcher extends BaseActivity
                     String id = ((ShortcutInfo) info).getDeepShortcutId();
                     String packageName = intent.getPackage();
                     DeepShortcutManager.getInstance(this).startShortcut(
-                            packageName, id, intent, optsBundle, info.user);
+                            packageName, id, intent.getSourceBounds(), optsBundle, info.user);
                 } else {
                     // Could be launching some bookkeeping activity
                     startActivity(intent, optsBundle);
+                    if (isAllAppsVisible()) {
+                        mPredictiveAppsProvider.updateComponentCount(intent.getComponent());
+                    }
                 }
             } finally {
                 StrictMode.setVmPolicy(oldPolicy);
@@ -2712,6 +2732,9 @@ public class Launcher extends BaseActivity
             } else if (user == null || user.equals(Process.myUserHandle())) {
                 // Could be launching some bookkeeping activity
                 startActivity(intent, optsBundle);
+                if (isAllAppsVisible()) {
+                    mPredictiveAppsProvider.updateComponentCount(intent.getComponent());
+                }
             } else {
                 LauncherAppsCompat.getInstance(this).startActivityForProfile(
                         intent.getComponent(), user, intent.getSourceBounds(), optsBundle);
@@ -2735,12 +2758,6 @@ public class Launcher extends BaseActivity
         if (!isDraggingEnabled()) return false;
         if (isWorkspaceLocked()) return false;
         if (mState != State.WORKSPACE) return false;
-
-        if ((FeatureFlags.NO_ALL_APPS_ICON && v instanceof PageIndicatorCaretLandscape) ||
-                (v == mAllAppsButton && mAllAppsButton != null)) {
-            onLongClickAllAppsButton(v);
-            return true;
-        }
 
         boolean ignoreLongPressToOverview =
                 mDeviceProfile.shouldIgnoreLongPressToOverview(mLastDispatchTouchEventX);
@@ -2941,13 +2958,12 @@ public class Launcher extends BaseActivity
     /**
      * Shows the apps view.
      */
-    public void showAppsView(boolean animated, boolean updatePredictedApps,
-            boolean focusSearchBar) {
+    public void showAppsView(boolean animated, boolean updatePredictedApps) {
         markAppsViewShown();
         if (updatePredictedApps) {
             tryAndUpdatePredictedApps();
         }
-        showAppsOrWidgets(State.APPS, animated, focusSearchBar);
+        showAppsOrWidgets(State.APPS, animated);
     }
 
     /**
@@ -2958,7 +2974,7 @@ public class Launcher extends BaseActivity
         if (resetPageToZero) {
             mWidgetsView.scrollToTop();
         }
-        showAppsOrWidgets(State.WIDGETS, animated, false);
+        showAppsOrWidgets(State.WIDGETS, animated);
 
         mWidgetsView.post(new Runnable() {
             @Override
@@ -2975,7 +2991,7 @@ public class Launcher extends BaseActivity
      */
     // TODO: calling method should use the return value so that when {@code false} is returned
     // the workspace transition doesn't fall into invalid state.
-    private boolean showAppsOrWidgets(State toState, boolean animated, boolean focusSearchBar) {
+    private boolean showAppsOrWidgets(State toState, boolean animated) {
         if (!(mState == State.WORKSPACE ||
                 mState == State.APPS_SPRING_LOADED ||
                 mState == State.WIDGETS_SPRING_LOADED ||
@@ -2993,7 +3009,7 @@ public class Launcher extends BaseActivity
         }
 
         if (toState == State.APPS) {
-            mStateTransitionAnimation.startAnimationToAllApps(animated, focusSearchBar);
+            mStateTransitionAnimation.startAnimationToAllApps(animated);
         } else {
             mStateTransitionAnimation.startAnimationToWidgets(animated);
         }
@@ -3066,8 +3082,7 @@ public class Launcher extends BaseActivity
 
     public void exitSpringLoadedDragMode() {
         if (mState == State.APPS_SPRING_LOADED) {
-            showAppsView(true /* animated */,
-                    false /* updatePredictedApps */, false /* focusSearchBar */);
+            showAppsView(true /* animated */, false /* updatePredictedApps */);
         } else if (mState == State.WIDGETS_SPRING_LOADED) {
             showWidgetsView(true, false);
         } else if (mState == State.WORKSPACE_SPRING_LOADED) {
@@ -3080,11 +3095,13 @@ public class Launcher extends BaseActivity
      * resumed.
      */
     public void tryAndUpdatePredictedApps() {
-        if (mLauncherCallbacks != null) {
-            List<ComponentKeyMapper<AppInfo>> apps = mLauncherCallbacks.getPredictedApps();
-            if (apps != null) {
-                mAppsView.setPredictedApps(apps);
-            }
+        List<ComponentKeyMapper<AppInfo>> apps = null;
+        if (mSharedPrefs.getBoolean("pref_predictive_apps", true)) {
+            apps = mPredictiveAppsProvider.getPredictions();
+        }
+
+        if (apps != null) {
+            mAppsView.setPredictedApps(apps);
         }
     }
 
@@ -3931,6 +3948,92 @@ public class Launcher extends BaseActivity
         mWorkspace.moveToDefaultScreen(false);
     }
 
+    public void startEdit(ItemInfo info, ComponentName component) {
+        LauncherActivityInfo app = LauncherAppsCompat.getInstance(this)
+                .resolveActivity(info.getIntent(), info.user);
+        CharSequence label = mIconCache.getCacheEntry(app).title;
+
+        View dialogView = getLayoutInflater().inflate(R.layout.target_edit_dialog, null);
+        ImageView editIcon = dialogView.findViewById(R.id.edit_dialog_icon);
+        mIconEditTitle = dialogView.findViewById(R.id.edit_dialog_title);
+        mIconEditTitle.setText(label);
+
+        Bitmap originalIcon = mIconsHandler.getDrawableIconForPackage(component);
+        Bitmap icon;
+        if (info instanceof ShortcutInfo) {
+            icon = ((ShortcutInfo) info).iconBitmap;
+        } else if (info instanceof AppInfo) {
+            icon = ((AppInfo) info).iconBitmap;
+        } else {
+            // Fallback to default icon
+            icon = originalIcon;
+        }
+        editIcon.setImageBitmap(icon);
+
+        final Pair<List<String>, List<String>> iconPacks = mIconsHandler.getAllIconPacks();
+        final Drawable editIconForeground;
+
+        // if no custom icon packs are installed, disallow icon editing
+        if (iconPacks.second.isEmpty()) {
+            editIconForeground = null;
+            editIcon.setEnabled(false);
+        } else {
+            editIconForeground = getDrawable(R.drawable.ic_icon_change);
+            editIcon.setEnabled(true);
+
+            ListPopupWindow listPopup = new ListPopupWindow(this);
+            listPopup.setAdapter(new ArrayAdapter<>(this, R.layout.target_edit_dialog_item,
+                    iconPacks.second));
+            listPopup.setWidth(getResources().getDimensionPixelSize(R.dimen.edit_dialog_min_width));
+            listPopup.setAnchorView(editIcon);
+            listPopup.setModal(true);
+            listPopup.setOnItemClickListener(getIconPackClickListener(info, component, label,
+                    iconPacks.first));
+
+            editIcon.setOnClickListener(v -> listPopup.show());
+        }
+        editIcon.setForeground(editIconForeground);
+
+        mIconEditDialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.app_edit_drop_target_label)
+                .setView(dialogView)
+                .setOnDismissListener(dialog ->
+                        LauncherAppState.getInstance(this).getModel().forceReload())
+                .setNeutralButton(R.string.icon_pack_reset, (dialog, which) ->
+                        mIconCache.addCustomInfoToDataBase(new BitmapDrawable(getResources(),
+                                originalIcon), info, null))
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    Drawable newIcon = new BitmapDrawable(getResources(), Utilities.ATLEAST_OREO ?
+                            LauncherIcons.createIconBitmap(icon, getApplicationContext()) : icon);
+                    mIconCache.addCustomInfoToDataBase(newIcon, info, mIconEditTitle.getText());
+                })
+                .create();
+
+        // Set background color
+        boolean isDark = Themes.getAttrBoolean(this, R.attr.isMainColorDark);
+        Window dialogWindow = mIconEditDialog.getWindow();
+        if (dialogWindow != null) {
+            dialogWindow.setBackgroundDrawableResource(isDark ?
+                    R.color.dialog_background_dark : R.color.dialog_background_light);
+        }
+        mIconEditDialog.show();
+    }
+
+    private AdapterView.OnItemClickListener getIconPackClickListener(ItemInfo info,
+                                                                     ComponentName componentName,
+                                                                     CharSequence label,
+                                                                     List<String> packs) {
+        return (parent, view, postition, id) -> {
+            Intent intent = new Intent(Launcher.this, IconPickerActivity.class);
+            IconPickerActivity.setItemInfo(info);
+            intent.putExtra(IconPickerActivity.EXTRA_PACKAGE, componentName.getPackageName())
+                    .putExtra(IconPickerActivity.EXTRA_LABEL, label)
+                    .putExtra(IconPickerActivity.EXTRA_ICON_PACK, packs.get(postition));
+            Launcher.this.startActivity(intent);
+            mIconEditDialog.dismiss();
+        };
+    }
+
     /**
      * $ adb shell dumpsys activity com.android.launcher3.Launcher [--all]
      */
@@ -4013,7 +4116,7 @@ public class Launcher extends BaseActivity
             switch (keyCode) {
                 case KeyEvent.KEYCODE_A:
                     if (mState == State.WORKSPACE) {
-                        showAppsView(true, true, false);
+                        showAppsView(true, true);
                         return true;
                     }
                     break;

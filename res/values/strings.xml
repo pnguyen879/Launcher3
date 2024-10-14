@@ -202,8 +202,6 @@
     <string name="icon_shape_circle">Circle</string>
     <!-- Option to change the shape of the home screen icons to a teardrop. This represents the name of the shape similar to a circle with with the bottom right corner pushed out like a square [CHAR LIMIT=50] -->
     <string name="icon_shape_teardrop">Teardrop</string>
-    <!-- Option to change the shape of the home screen icons to a cylinder. [CHAR LIMIT=50] -->
-    <string name="icon_shape_cylinder">Cylinder</string>
 
     <!-- Message shown in the progress dialog when the icon shape override is being applied [CHAR LIMIT=100]-->
     <string name="icon_shape_override_progress">Applying icon shape changes</string>
@@ -318,51 +316,4 @@
     <!-- Accessibility confirmation for notification being dismissed. -->
     <string name="notification_dismissed">Notification dismissed</string>
 
-    <string name="icu_abbrev_wday_month_day_no_year">EEEEMMMd</string>
-    <string name="smartspace_preferences">Preferences</string>
-    <string name="label_search">Search</string>
-    <string name="label_voice_search">Voice search</string>
-    <string name="default_live_wallpaper">com.breel.wallpapers/com.breel.wallpapers.dioramas.lagos.LagosWallpaperService</string>
-    <string name="pref_icon_pack">Icon pack</string>
-    <string name="state_loading">Applying…</string>
-    <string name="smartspace_preferences_in_settings">At A Glance</string>
-    <string name="smartspace_preferences_in_settings_desc">At the top of your Home screen</string>
-    <string name="title_show_google_app">Display %1$s</string>
-    <string name="pref_show_google_now_summary">@string/msg_minus_one_on_left</string>
-    <string name="msg_minus_one_on_left">To the left of the main Home screen</string>
-    <string name="about">About</string>
-    <string name="title_google_app">Google app</string>
-    <string name="title_app_suggestions">Display app suggestions</string>
-    <string name="summary_app_suggestions">At the top of your All Apps list</string>
-    <string name="about_app_version">Version</string>
-    <string name="app_releases_url">https://play.google.com/store/apps/details?id=amirz.rootless.nexuslauncher</string>
-    <string name="app_donate_url">https://play.google.com/store/apps/details?id=amirz.donation</string>
-    <string name="app_name_pixel_launcher">Pixel Launcher</string>
-    <string name="title_disable_suggestions_prompt">Turn off app suggestions?</string>
-    <string name="msg_disable_suggestions_prompt">"Suggestions won't appear at the top of your apps list, and the usage data used to create them will be permanently erased."</string>
-    <string name="label_turn_off_suggestions">TURN OFF</string>
-    <string name="action_edit">Edit</string>
-    <string name="hide_app_sum">Hide app from the app drawer</string>
-    <string name="hide_app">Hide app</string>
-    <string name="icon_shape_rounded_square">Rounded square</string>
-    <string name="smartspace_hours_mins">%1$s %2$s</string>
-    <string name="action_preferences">@string/smartspace_preferences</string>
-
-    <!-- Theme selection -->
-    <string name="theme_title">Theme</string>
-    <string name="theme_automatic">Automatic</string>
-    <string name="theme_default">Default</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
-    <string name="theme_transparent">Transparent</string>
-    <string name="pref_open_source_licenses_title">Open source licenses</string>
-
-    <!-- Custom -->
-    <string name="app_name_rootless_pixel_launcher">Rootless Pixel Launcher</string>
-    <string name="about_donate">Donate</string>
-    <string name="bridge_missing_title">Rootless Pixel Bridge</string>
-    <string name="bridge_missing_message">
-        The bridge to connect to the Google Feed could not be found,
-        or needs to be updated.
-    </string>
 </resources>

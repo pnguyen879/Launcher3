@@ -234,8 +234,8 @@ public class DragLayer extends InsettableFrameLayout {
                 && mCurrentResizeFrame.onControllerInterceptTouchEvent(ev)) {
             mActiveController = mCurrentResizeFrame;
             return true;
-        } else if (clearResizeFrame()) {
-            return true;
+        } else {
+            clearResizeFrame();
         }
 
         if (mDragController.onControllerInterceptTouchEvent(ev)) {
@@ -542,13 +542,11 @@ public class DragLayer extends InsettableFrameLayout {
         }
     }
 
-    public boolean clearResizeFrame() {
+    public void clearResizeFrame() {
         if (mCurrentResizeFrame != null) {
             removeView(mCurrentResizeFrame);
             mCurrentResizeFrame = null;
-            return true;
         }
-        return false;
     }
 
     public void addResizeFrame(LauncherAppWidgetHostView widget, CellLayout cellLayout) {

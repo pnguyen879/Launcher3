@@ -6,8 +6,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.graphics.Color;
 import android.support.animation.SpringAnimation;
 import android.support.v4.graphics.ColorUtils;
@@ -17,7 +15,6 @@ import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.view.inputmethod.InputMethodManager;
 
 import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.Hotseat;
@@ -35,8 +32,6 @@ import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 import com.android.launcher3.util.SystemUiController;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.util.TouchController;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Handles AllApps view transition.
@@ -110,16 +105,6 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
     private SpringAnimation mSearchSpring;
     private SpringAnimationHandler mSpringAnimationHandler;
 
-    private final static float NOTIFICATION_OPEN_VELOCITY = 2.25f;
-    private final static float NOTIFICATION_CLOSE_VELOCITY = -0.35f;
-    enum NotificationState {
-        Locked,
-        Free,
-        Opened,
-        Closed
-    }
-    private NotificationState mNotificationState;
-
     public AllAppsTransitionController(Launcher l) {
         mLauncher = l;
         mDetector = new SwipeDetector(l, this, SwipeDetector.VERTICAL);
@@ -153,7 +138,7 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
                     if (mLauncher.isAllAppsVisible()) {
                         directionsToDetectScroll |= SwipeDetector.DIRECTION_NEGATIVE;
                     } else {
-                        directionsToDetectScroll |= SwipeDetector.DIRECTION_BOTH;
+                        directionsToDetectScroll |= SwipeDetector.DIRECTION_POSITIVE;
                     }
                 } else {
                     if (isInDisallowRecatchBottomZone()) {
@@ -206,7 +191,6 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
         if (hasSpringAnimationHandler()) {
             mSpringAnimationHandler.skipToEnd();
         }
-        mNotificationState = NotificationState.Free;
     }
 
     @Override
@@ -215,62 +199,12 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
             return false;   // early termination.
         }
 
-        //Locked means do not use any notification code
-        if (mNotificationState != NotificationState.Locked) {
-            if (mProgress < 1f) {
-                //Apps list is being opened, disable notification code
-                mNotificationState = NotificationState.Locked;
-            } else {
-                //Disable code when access to the hidden APIs returns an error
-                if (velocity > NOTIFICATION_OPEN_VELOCITY &&
-                        (mNotificationState == NotificationState.Free || mNotificationState == NotificationState.Closed)) {
-                    mNotificationState = openNotifications() ?
-                            NotificationState.Opened :
-                            NotificationState.Locked;
-                } else if (velocity < NOTIFICATION_CLOSE_VELOCITY &&
-                        mNotificationState == NotificationState.Opened) {
-                    mNotificationState = closeNotifications() ?
-                            NotificationState.Closed :
-                            NotificationState.Locked;
-                }
-
-                //Don't open all apps when notification shade is being used
-                if (mNotificationState == NotificationState.Opened || mNotificationState == NotificationState.Closed) {
-                    return true;
-                }
-            }
-        }
-
         mContainerVelocity = velocity;
 
         float shift = Math.min(Math.max(0, mShiftStart + displacement), mShiftRange);
         setProgress(shift / mShiftRange);
 
         return true;
-    }
-
-    @SuppressLint({"WrongConstant", "PrivateApi"})
-    private boolean openNotifications() {
-        try {
-            Class.forName("android.app.StatusBarManager")
-                    .getMethod("expandNotificationsPanel")
-                    .invoke(mLauncher.getSystemService("statusbar"));
-            return true;
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
-            return false;
-        }
-    }
-
-    @SuppressLint({"WrongConstant", "PrivateApi"})
-    private boolean closeNotifications() {
-        try {
-            Class.forName("android.app.StatusBarManager")
-                    .getMethod("collapsePanels")
-                    .invoke(mLauncher.getSystemService("statusbar"));
-            return true;
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
-            return false;
-        }
     }
 
     @Override
@@ -282,7 +216,7 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
         final int containerType = mTouchEventStartedOnHotseat
                 ? ContainerType.HOTSEAT : ContainerType.WORKSPACE;
 
-        if (fling && mNotificationState != NotificationState.Opened && mNotificationState != NotificationState.Closed) {
+        if (fling) {
             if (velocity < 0) {
                 calculateDuration(velocity, mAppsView.getTranslationY());
 
@@ -292,9 +226,7 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
                             Action.Direction.UP,
                             containerType);
                 }
-                mLauncher.showAppsView(true /* animated */,
-                        false /* updatePredictedApps */,
-                        false /* focusSearchBar */);
+                mLauncher.showAppsView(true /* animated */, false /* updatePredictedApps */);
                 if (hasSpringAnimationHandler()) {
                     mSpringAnimationHandler.add(mSearchSpring, true /* setDefaultValues */);
                     // The icons are moving upwards, so we go to 0 from 1. (y-axis 1 is below 0.)
@@ -317,9 +249,7 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
                             Action.Direction.UP,
                             containerType);
                 }
-                mLauncher.showAppsView(true, /* animated */
-                        false /* updatePredictedApps */,
-                        false /* focusSearchBar */);
+                mLauncher.showAppsView(true, /* animated */ false /* updatePredictedApps */);
             }
         }
     }
@@ -328,17 +258,11 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
         return mDetector.isDraggingOrSettling();
     }
 
-    public boolean isDragging() {
-        return mDetector.isDraggingState();
-    }
-
     /**
      * @param start {@code true} if start of new drag.
      */
     public void preparePull(boolean start) {
         if (start) {
-            ((InputMethodManager) mLauncher.getSystemService(Context.INPUT_METHOD_SERVICE))
-                    .hideSoftInputFromWindow(mLauncher.getAppsView().getWindowToken(), 0);
             // Initialize values that should not change until #onDragEnd
             mStatusBarHeight = mLauncher.getDragLayer().getInsets().top;
             mHotseat.setVisibility(View.VISIBLE);
@@ -346,7 +270,6 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
             mHotseat.setBackgroundTransparent(true /* transparent */);
             if (!mLauncher.isAllAppsVisible()) {
                 mLauncher.tryAndUpdatePredictedApps();
-                mAppsView.reset();
                 mAppsView.setVisibility(View.VISIBLE);
                 if (!FeatureFlags.LAUNCHER3_GRADIENT_ALL_APPS) {
                     mAppsView.setRevealDrawableColor(mHotseatBackgroundColor);
@@ -380,7 +303,6 @@ public class AllAppsTransitionController implements TouchController, SwipeDetect
         if (mGradientView == null) {
             mGradientView = (GradientView) mLauncher.findViewById(R.id.gradient_bg);
             mGradientView.setVisibility(View.VISIBLE);
-            mGradientView.setShiftScrim(!Utilities.ATLEAST_MARSHMALLOW);
         }
         mGradientView.setProgress(progress);
     }

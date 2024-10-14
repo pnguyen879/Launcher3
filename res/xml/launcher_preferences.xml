@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 Google Inc.
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2015 Google Inc.
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,120 +14,110 @@
 -->
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <com.android.launcher3.views.ButtonPreference
-        android:key="pref_icon_badging"
-        android:title="@string/icon_badging_title"
-        android:persistent="false"
-        android:widgetLayout="@layout/notification_pref_warning" >
-        <intent android:action="android.settings.NOTIFICATION_SETTINGS">
-            <!-- This extra highlights the "Allow icon badges" field in Notification settings -->
-            <extra
-                android:name=":settings:fragment_args_key"
-                android:value="notification_badging" />
-        </intent>
-    </com.android.launcher3.views.ButtonPreference>
-
     <SwitchPreference
-        android:key="pref_smartspace"
-        android:title="@string/smartspace_preferences_in_settings"
-        android:summary="@string/smartspace_preferences_in_settings_desc"
         android:defaultValue="true"
+        android:icon="@drawable/ic_settings_edit"
+        android:key="pref_workspace_edit"
         android:persistent="true"
-        />
+        android:summaryOff="@string/settings_edit_allow_summary_off"
+        android:summaryOn="@string/settings_edit_allow_summary_on"
+        android:title="@string/settings_edit_allow_title" />
 
-    <SwitchPreference
-        android:key="pref_add_icon_to_home"
-        android:title="@string/auto_add_shortcuts_label"
-        android:summary="@string/auto_add_shortcuts_description"
-        android:defaultValue="true"
-        android:persistent="true"
-        />
+    <PreferenceCategory
+        android:key="category_home"
+        android:title="@string/settings_category_home">
 
-    <SwitchPreference
-        android:key="pref_enable_minus_one"
-        android:title="@string/title_show_google_app"
-        android:summary="@string/pref_show_google_now_summary"
-        android:defaultValue="true"
-        />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_feed"
+            android:key="pref_enable_minus_one"
+            android:summary="@string/pref_show_google_now_summary"
+            android:title="@string/title_show_google_app" />
 
-    <SwitchPreference
-        android:key="pref_show_predictions"
-        android:title="@string/title_app_suggestions"
-        android:summary="@string/summary_app_suggestions"
-        android:defaultValue="true"
-        />
+        <SwitchPreference
+            android:defaultValue="@bool/allow_rotation"
+            android:icon="@drawable/ic_settings_rotation"
+            android:key="pref_allowRotation"
+            android:persistent="true"
+            android:title="@string/settings_rotation_title" />
 
-    <SwitchPreference
-        android:key="pref_allowRotation"
-        android:title="@string/allow_rotation_title"
-        android:defaultValue="@bool/allow_rotation"
-        android:persistent="true"
-        />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_swipe_down"
+            android:key="pref_expand_statusbar"
+            android:persistent="true"
+            android:title="@string/statusbar_expand" />
 
-    <ListPreference
-        android:key="pref_override_theme"
-        android:title="@string/theme_title"
-        android:summary="%s"
-        android:entries="@array/theme_override_names"
-        android:entryValues="@array/theme_override_values"
-        android:defaultValue=""
-        android:persistent="true" />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_add_shortcut"
+            android:key="pref_add_icon_to_home"
+            android:persistent="true"
+            android:summary="@string/auto_add_shortcuts_description"
+            android:title="@string/auto_add_shortcuts_label" />
 
-    <ListPreference
-        android:key="pref_override_icon_shape"
-        android:title="@string/icon_shape_override_label"
-        android:summary="%s"
-        android:entries="@array/icon_shape_override_paths_names"
-        android:entryValues="@array/icon_shape_override_paths_values"
-        android:defaultValue=""
-        android:persistent="false" />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_label_workspace"
+            android:key="pref_desktop_show_labels"
+            android:persistent="true"
+            android:title="@string/desktop_show_labels" />
+    </PreferenceCategory>
 
-    <com.google.android.apps.nexuslauncher.CustomIconPreference
-        android:key="pref_icon_pack"
-        android:title="@string/pref_icon_pack"
-        android:summary="%s"
-        android:defaultValue=""
-        android:persistent="true" />
+    <PreferenceCategory android:title="@string/settings_category_drawer">
 
-    <PreferenceScreen
-        android:key="about_screen"
-        android:title="@string/about"
-        android:persistent="false">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_predictive"
+            android:key="pref_predictive_apps"
+            android:persistent="true"
+            android:summaryOff="@string/predictive_apps_summary_off"
+            android:summaryOn="@string/predictive_apps_summary_on"
+            android:title="@string/predictive_apps_title" />
 
-        <Preference
-            android:key="about_app_version"
-            android:title="@string/about_app_version"
-            android:persistent="false">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="@string/app_releases_url" />
-        </Preference>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_label_drawer"
+            android:key="pref_drawer_show_labels"
+            android:persistent="true"
+            android:title="@string/drawer_show_labels" />
+    </PreferenceCategory>
 
-        <Preference
-            android:key="developer"
-            android:title="@string/about_donate"
-            android:persistent="false">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="@string/app_donate_url" />
-        </Preference>
+    <PreferenceCategory
+        android:key="category_icons"
+        android:title="@string/settings_category_icons">
 
-        <Preference
-            android:key="app_info"
-            android:title="@string/app_info_drop_target_label"
-            android:persistent="false">
-            <intent
-                android:action="android.settings.APPLICATION_DETAILS_SETTINGS"
-                android:data="package:amirz.rootless.nexuslauncher" />
-        </Preference>
-
-        <Preference
+        <ListPreference
+            android:defaultValue="@string/icon_shape_default"
+            android:entries="@array/icon_shape_entries"
+            android:entryValues="@array/icon_shape_paths"
+            android:icon="@drawable/ic_settings_shape"
+            android:key="pref_override_icon_shape"
             android:persistent="false"
-            android:title="@string/pref_open_source_licenses_title"
-            android:key="open_source_licenses"
-            android:fragment="com.google.android.apps.nexuslauncher.SettingsActivity$OpenSourceLicensesFragment" />
+            android:summary="%s"
+            android:title="@string/settings_icon_shape" />
 
-    </PreferenceScreen>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_settings_force_adaptive"
+            android:key="pref_icon_force_adaptive"
+            android:persistent="true"
+            android:summaryOff="@string/settings_icon_force_adaptive_desc_off"
+            android:summaryOn="@string/settings_icon_force_adaptive_desc_on"
+            android:title="@string/settings_icon_force_adaptive_title" />
 
+        <com.android.launcher3.views.ButtonPreference
+            android:icon="@drawable/ic_settings_notification"
+            android:key="pref_icon_badging"
+            android:persistent="false"
+            android:title="@string/icon_badging_title"
+            android:widgetLayout="@layout/notification_pref_warning">
+            <intent android:action="android.settings.NOTIFICATION_SETTINGS">
+                <!-- This extra highlights the "Allow icon badges" field in Notification settings -->
+                <extra
+                    android:name=":settings:fragment_args_key"
+                    android:value="notification_badging" />
+            </intent>
+        </com.android.launcher3.views.ButtonPreference>
+    </PreferenceCategory>
 </PreferenceScreen>
